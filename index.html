@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch.14 財務比率｜複習網站</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy: #2c3e6b; --red: #b0392b; --purple: #6b4e9e;
+    --bg: #f4f6fb; --card: #fff; --line: #e3e3e3; --green: #2e8b57;
+  }
+  body {
+    font-family: "Microsoft JhengHei", "Segoe UI", sans-serif;
+    background: var(--bg); color: #1a1a1a; line-height: 1.4;
+    padding: 0 0 60px;
+  }
+  header {
+    background: var(--navy); color: #fff; padding: 16px 18px;
+    position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,.15);
+  }
+  header h1 { font-size: 18px; }
+  header p { font-size: 12px; opacity: .85; margin-top: 2px; }
+  .tabs {
+    display: flex; gap: 6px; background: var(--navy);
+    padding: 0 12px 12px; position: sticky; top: 60px; z-index: 9;
+  }
+  .tab {
+    flex: 1; padding: 9px 6px; border: none; border-radius: 8px;
+    background: rgba(255,255,255,.15); color: #fff; font-size: 13px;
+    cursor: pointer; font-weight: bold; transition: .15s;
+  }
+  .tab.active { background: #fff; color: var(--navy); }
+  .badge {
+    display: inline-block; min-width: 17px; height: 17px; line-height: 17px;
+    background: var(--red); color: #fff; border-radius: 9px; font-size: 11px;
+    padding: 0 4px; margin-left: 3px; vertical-align: middle;
+  }
+  .badge:empty { display: none; }
+  main { max-width: 760px; margin: 0 auto; padding: 16px; }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ---- formula table ---- */
+  .cat {
+    background: var(--navy); color: #fff; padding: 6px 12px;
+    font-weight: bold; border-radius: 6px; margin: 16px 0 8px; font-size: 14px;
+  }
+  .cat.purple { background: var(--purple); }
+  .cat .en { font-weight: normal; opacity: .85; font-size: 12px; }
+  .frow {
+    background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+    padding: 12px 14px; margin-bottom: 8px;
+  }
+  .frow .head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+  .frow .head b { font-size: 15px; }
+  .frow .head span { color: #888; font-size: 12px; }
+  .frac { display: inline-block; text-align: center; vertical-align: middle; margin: 0 2px; }
+  .frac .top { display: block; padding: 0 8px 2px; border-bottom: 2px solid #333; }
+  .frac .bot { display: block; padding: 2px 8px 0; }
+  .eq { padding: 0 5px; font-size: 15px; vertical-align: middle; }
+  .zhgloss { color: var(--red); font-size: 12px; margin-top: 8px; }
+  .dupont {
+    background: #f3eef8; border: 1.5px solid var(--purple); border-radius: 8px;
+    padding: 14px; margin-top: 8px; text-align: center;
+  }
+  .dupont b { color: var(--purple); font-size: 15px; }
+
+  /* ---- quiz ---- */
+  .panel {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 20px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,.05);
+  }
+  .scorebar {
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 10px; padding: 10px 16px; margin-bottom: 14px; font-size: 13px;
+  }
+  .scorebar b { font-size: 18px; color: var(--navy); }
+  .qcat { font-size: 12px; color: var(--red); font-weight: bold; }
+  .qname { font-size: 19px; font-weight: bold; margin: 6px 0 2px; }
+  .qname-zh { font-size: 13px; color: #888; margin-bottom: 14px; }
+  .qformula { font-size: 16px; text-align: center; margin: 18px 0; }
+  .blank {
+    display: inline-block; min-width: 110px; border-bottom: 2px dashed var(--red);
+    color: var(--red); font-weight: bold; padding: 0 6px;
+  }
+  .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+  .opt {
+    padding: 11px 8px; border: 1.5px solid var(--line); border-radius: 8px;
+    background: #fafafa; cursor: pointer; font-size: 13.5px; text-align: center;
+    transition: .12s;
+  }
+  .opt small { display: block; color: #999; font-size: 11px; margin-top: 2px; }
+  .opt:hover { border-color: var(--navy); }
+  .opt.correct { background: #e3f5ea; border-color: var(--green); color: var(--green); font-weight: bold; }
+  .opt.correct small { color: var(--green); }
+  .opt.wrong { background: #fbe7e4; border-color: var(--red); color: var(--red); }
+  .opt.disabled { pointer-events: none; opacity: .92; }
+  .btn {
+    display: inline-block; padding: 11px 20px; border: none; border-radius: 8px;
+    background: var(--navy); color: #fff; font-size: 14px; font-weight: bold;
+    cursor: pointer; margin-top: 10px;
+  }
+  .btn.ghost { background: #fff; color: var(--navy); border: 1.5px solid var(--navy); }
+  .btn.red { background: var(--red); }
+  .btn.green { background: var(--green); }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  textarea {
+    width: 100%; min-height: 70px; border: 1.5px solid var(--line);
+    border-radius: 8px; padding: 10px; font-size: 15px; font-family: inherit;
+    margin-top: 8px; resize: vertical;
+  }
+  .answer {
+    background: #eef1f8; border-left: 4px solid var(--navy);
+    padding: 12px 14px; border-radius: 6px; margin-top: 12px; display: none;
+  }
+  .answer.show { display: block; }
+  .answer .label { font-size: 12px; color: var(--navy); font-weight: bold; margin-bottom: 4px; }
+  .hint {
+    background: #eef1f8; border: 1px solid var(--navy); border-radius: 8px;
+    padding: 12px 14px; font-size: 12.5px; margin-top: 16px;
+  }
+  .hint b { color: var(--navy); }
+  .done { text-align: center; padding: 30px 10px; }
+  .done .big { font-size: 40px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>📊 Ch.14 財務比率複習</h1>
+  <p>Analyzing Financial Statements ｜ 全英文公式默寫衝刺</p>
+</header>
+<div class="tabs">
+  <button class="tab active" data-v="ref">📖 公式表</button>
+  <button class="tab" data-v="fill">✍️ 挖空填填</button>
+  <button class="tab" data-v="recall">🧠 默寫自測</button>
+  <button class="tab" data-v="wrong">📌 錯題本<span id="wrongBadge" class="badge"></span></button>
+</div>
+
+<main>
+  <section id="ref" class="view active"></section>
+
+  <section id="fill" class="view">
+    <div class="scorebar">
+      <span>答對 <b id="fScore">0</b> / 作答 <b id="fTotal">0</b></span>
+      <button class="btn ghost" onclick="resetFill()" style="margin:0;padding:7px 14px;">重新開始</button>
+    </div>
+    <div class="panel" id="fillPanel"></div>
+  </section>
+
+  <section id="recall" class="view">
+    <div class="scorebar">
+      <span>第 <b id="rIdx">1</b> / <b id="rLen">17</b> 題</span>
+      <span>自評：✅ <b id="rRight">0</b>　❌ <b id="rWrong">0</b></span>
+    </div>
+    <div class="panel" id="recallPanel"></div>
+  </section>
+
+  <section id="wrong" class="view">
+    <div id="wrongPanel"></div>
+  </section>
+</main>
+
+<script>
+// 每個 term = {en, zh}；答案以英文為準
+const DATA = [
+  {cat:"流動性與效率", en:"Current Ratio", zh:"流動比率",
+    num:{en:"Current assets", zh:"流動資產"}, den:{en:"Current liabilities", zh:"流動負債"}},
+  {cat:"流動性與效率", en:"Acid-test (Quick) Ratio", zh:"速動比率",
+    num:{en:"Current assets − Inventories − Prepayments", zh:"流動資產 − 存貨 − 預付款項"}, den:{en:"Current liabilities", zh:"流動負債"}},
+  {cat:"流動性與效率", en:"Accounts Receivable Turnover", zh:"應收帳款週轉率",
+    num:{en:"Net sales", zh:"銷貨淨額"}, den:{en:"Average accounts receivable", zh:"平均應收帳款"}},
+  {cat:"流動性與效率", en:"Average Collection Period", zh:"平均收現天數",
+    num:{en:"365", zh:"365"}, den:{en:"Accounts receivable turnover", zh:"應收帳款週轉率"}},
+  {cat:"流動性與效率", en:"Inventory Turnover", zh:"存貨週轉率",
+    num:{en:"Cost of goods sold", zh:"銷貨成本"}, den:{en:"Average inventory", zh:"平均存貨"}},
+  {cat:"流動性與效率", en:"Days' Sales in Inventory", zh:"存貨銷售天數",
+    num:{en:"365", zh:"365"}, den:{en:"Inventory turnover", zh:"存貨週轉率"}},
+  {cat:"流動性與效率", en:"Fixed Asset (PP&E) Turnover", zh:"固定資產週轉率",
+    num:{en:"Net sales", zh:"銷貨淨額"}, den:{en:"Average fixed assets (PP&E)", zh:"平均固定資產"}},
+  {cat:"償債能力", en:"Debt Ratio", zh:"負債比率",
+    num:{en:"Total liabilities", zh:"負債總額"}, den:{en:"Total assets", zh:"資產總額"}},
+  {cat:"償債能力", en:"Debt-to-equity Ratio", zh:"負債權益比",
+    num:{en:"Total liabilities", zh:"負債總額"}, den:{en:"Total equity", zh:"權益總額"}},
+  {cat:"償債能力", en:"Assets-to-equity Ratio", zh:"資產權益比",
+    num:{en:"Total assets", zh:"資產總額"}, den:{en:"Total equity", zh:"權益總額"}},
+  {cat:"償債能力", en:"Times Interest Earned Ratio", zh:"利息保障倍數",
+    num:{en:"Income before interests and taxes (operating profit)", zh:"稅前息前淨利（營業利益）"}, den:{en:"Annual interest expenses", zh:"年度利息費用"}},
+  {cat:"獲利能力", en:"Profit Margin (Return on Sales)", zh:"純益率（銷售報酬率）",
+    num:{en:"Net income", zh:"淨利"}, den:{en:"Net sales", zh:"銷貨淨額"}},
+  {cat:"獲利能力", en:"Return on Assets (ROA)", zh:"資產報酬率",
+    num:{en:"Net income", zh:"淨利"}, den:{en:"Average total assets", zh:"平均資產總額"}},
+  {cat:"獲利能力", en:"Asset Turnover", zh:"資產週轉率",
+    num:{en:"Net sales", zh:"銷貨淨額"}, den:{en:"Average total assets", zh:"平均資產總額"}},
+  {cat:"獲利能力", en:"Return on Equity (ROE)", zh:"權益報酬率",
+    num:{en:"Net income − Preference dividends", zh:"淨利 − 特別股股利"}, den:{en:"Average total equity", zh:"平均權益總額"}},
+  {cat:"獲利能力", en:"Earnings per Share (EPS)", zh:"每股盈餘",
+    num:{en:"Net income − Preference dividends", zh:"淨利 − 特別股股利"}, den:{en:"Weighted-average common shares outstanding", zh:"加權平均流通在外普通股數"}},
+  {cat:"獲利能力", en:"Price-Earnings (PE) Ratio", zh:"本益比",
+    num:{en:"Market value of shares", zh:"股票市值"}, den:{en:"Net income", zh:"淨利"},
+    alt:{numEn:"Price per share", numZh:"每股市價", denEn:"Earnings per share", denZh:"每股盈餘"}},
+];
+
+// 用英文比率名當唯一 id；index 查詢
+function idxOf(id){ return DATA.findIndex(d => d.en===id); }
+
+/* ---------- 錯題本資料（localStorage）---------- */
+const WKEY = "ch14_wrong";
+function getWrong(){
+  try { return JSON.parse(localStorage.getItem(WKEY)) || []; } catch(e){ return []; }
+}
+function saveWrong(arr){ localStorage.setItem(WKEY, JSON.stringify(arr)); updateBadge(); }
+function addWrong(id){
+  const w = getWrong();
+  if(!w.includes(id)){ w.push(id); saveWrong(w); }
+}
+function removeWrong(id){ saveWrong(getWrong().filter(x => x!==id)); }
+function updateBadge(){
+  const n = getWrong().length;
+  document.getElementById("wrongBadge").textContent = n ? n : "";
+}
+
+document.querySelectorAll(".tab").forEach(t => {
+  t.onclick = () => {
+    document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+    document.querySelectorAll(".view").forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    document.getElementById(t.dataset.v).classList.add("active");
+    if(t.dataset.v === "wrong") buildWrong();
+  };
+});
+
+function fracHTML(top, bot){
+  return `<span class="frac"><span class="top">${top}</span><span class="bot">${bot}</span></span>`;
+}
+
+/* ---------- 公式表 ---------- */
+(function buildRef(){
+  const cats = ["流動性與效率","償債能力","獲利能力"];
+  const en = {"流動性與效率":"Liquidity & Efficiency","償債能力":"Solvency","獲利能力":"Profitability"};
+  let html = "";
+  cats.forEach(c => {
+    html += `<div class="cat">${c} <span class="en">${en[c]}</span></div>`;
+    DATA.filter(d => d.cat===c).forEach(d => {
+      let f = fracHTML(d.num.en, d.den.en);
+      let zh = `${d.num.zh} ÷ ${d.den.zh}`;
+      if(d.alt){
+        f += `<span class="eq">=</span>` + fracHTML(d.alt.numEn, d.alt.denEn);
+        zh += `　＝　${d.alt.numZh} ÷ ${d.alt.denZh}`;
+      }
+      html += `<div class="frow">
+        <div class="head"><b>${d.en}</b><span>${d.zh}</span></div>
+        <div class="qformula" style="margin:6px 0;"><span class="eq">=</span>${f}</div>
+        <div class="zhgloss">📖 ${zh}</div>
+      </div>`;
+    });
+  });
+  html += `<div class="cat purple">★ DuPont 杜邦分析 <span class="en">DuPont Framework</span></div>
+    <div class="dupont"><b>ROE = Profit margin × Asset turnover × Assets-to-equity</b><br><br>
+      <span class="eq">=</span>${fracHTML("Net income","Net sales")}
+      <span class="eq">×</span>${fracHTML("Net sales","Avg. total assets")}
+      <span class="eq">×</span>${fracHTML("Avg. total assets","Avg. total equity")}
+      <div class="zhgloss" style="margin-top:10px;">📖 權益報酬率 ＝ 純益率 × 資產週轉率 × 資產權益比</div>
+    </div>`;
+  html += `<div class="hint"><b>📌 老師 Hint：</b>默寫考<b>全英文</b>。「公式背好，題目就會寫了」，考試會給數字直接代入。
+    凡是 <b>Average</b>（平均）項目＝ <b>(beginning + ending) ÷ 2</b>（期初＋期末）÷2。
+    Cash flow 比率 (p.673–675) 不考。</div>`;
+  document.getElementById("ref").innerHTML = html;
+})();
+
+/* ---------- 挖空填填（英文）---------- */
+let fScore=0, fTotal=0, fLastIdx=-1;
+// 收集所有英文 term（含中文對照）作為選項池
+const termMap = {};
+DATA.forEach(d => { termMap[d.num.en]=d.num.zh; termMap[d.den.en]=d.den.zh; });
+const allTermEn = Object.keys(termMap);
+
+function newFill(){
+  let i; do { i = Math.floor(Math.random()*DATA.length); } while(i===fLastIdx && DATA.length>1);
+  fLastIdx = i;
+  const d = DATA[i];
+  const blankNum = Math.random() < 0.5;
+  const answer = blankNum ? d.num.en : d.den.en;
+  const pool = allTermEn.filter(t => t!==answer);
+  const opts = [answer];
+  while(opts.length < 4 && pool.length){
+    const k = Math.floor(Math.random()*pool.length);
+    opts.push(pool.splice(k,1)[0]);
+  }
+  for(let j=opts.length-1;j>0;j--){ const k=Math.floor(Math.random()*(j+1)); [opts[j],opts[k]]=[opts[k],opts[j]]; }
+
+  const blankSpan = `<span class="blank">？</span>`;
+  const frac = blankNum ? fracHTML(blankSpan, d.den.en) : fracHTML(d.num.en, blankSpan);
+
+  let html = `<div class="qcat">${d.cat}</div>
+    <div class="qname">${d.en}</div>
+    <div class="qname-zh">${d.zh}</div>
+    <div class="qformula"><span class="eq">=</span>${frac}</div>
+    <div class="opts">`;
+  opts.forEach(o => html += `<div class="opt" data-a="${o}">${o}<small>${termMap[o]}</small></div>`);
+  html += `</div><div id="fMsg" style="margin-top:14px;text-align:center;min-height:24px;"></div>`;
+  const panel = document.getElementById("fillPanel");
+  panel.innerHTML = html;
+
+  panel.querySelectorAll(".opt").forEach(opt => {
+    opt.onclick = () => {
+      panel.querySelectorAll(".opt").forEach(o => o.classList.add("disabled"));
+      fTotal++;
+      const correct = opt.dataset.a === answer;
+      if(correct){ opt.classList.add("correct"); fScore++; }
+      else {
+        opt.classList.add("wrong");
+        panel.querySelectorAll(".opt").forEach(o => { if(o.dataset.a===answer) o.classList.add("correct"); });
+        addWrong(d.en);   // 答錯 → 進錯題本
+      }
+      document.getElementById("fScore").textContent = fScore;
+      document.getElementById("fTotal").textContent = fTotal;
+      document.getElementById("fMsg").innerHTML =
+        (correct ? `<span style="color:var(--green);font-weight:bold;">✅ 答對！</span>` :
+                   `<span style="color:var(--red);font-weight:bold;">❌ 正解：${answer}（${termMap[answer]}）</span>`) +
+        `<br><button class="btn" onclick="newFill()" style="margin-top:10px;">下一題 →</button>`;
+    };
+  });
+}
+function resetFill(){ fScore=0; fTotal=0; document.getElementById("fScore").textContent=0; document.getElementById("fTotal").textContent=0; newFill(); }
+
+/* ---------- 默寫自測（寫英文，附中文）---------- */
+let rOrder=[], rPos=0, rRight=0, rWrong=0, rWrongOnly=false;
+function startRecall(indices){
+  rOrder = (indices && indices.length) ? indices.slice() : DATA.map((_,i)=>i);
+  rWrongOnly = !!(indices && indices.length);
+  for(let j=rOrder.length-1;j>0;j--){ const k=Math.floor(Math.random()*(j+1)); [rOrder[j],rOrder[k]]=[rOrder[k],rOrder[j]]; }
+  rPos=0; rRight=0; rWrong=0;
+  document.getElementById("rLen").textContent = rOrder.length;
+  document.getElementById("rRight").textContent = 0;
+  document.getElementById("rWrong").textContent = 0;
+  showRecall();
+}
+// 從錯題本進入：切到默寫分頁，只考錯題
+function reviewWrong(){
+  const idxs = getWrong().map(idxOf).filter(i => i>=0);
+  if(!idxs.length) return;
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+  document.querySelectorAll(".view").forEach(x => x.classList.remove("active"));
+  document.querySelector('.tab[data-v="recall"]').classList.add("active");
+  document.getElementById("recall").classList.add("active");
+  startRecall(idxs);
+}
+function showRecall(){
+  const panel = document.getElementById("recallPanel");
+  if(rPos >= rOrder.length){
+    const again = (rWrongOnly && getWrong().length)
+      ? `<button class="btn red" onclick="reviewWrong()">再複習錯題 🔁</button>`
+      : `<button class="btn green" onclick="startRecall()">再來一輪 🔁</button>`;
+    panel.innerHTML = `<div class="done"><div class="big">🎉</div>
+      <h2>完成！</h2><p style="margin:10px 0;">自評答對 <b style="color:var(--green)">${rRight}</b> 題，
+      要加強 <b style="color:var(--red)">${rWrong}</b> 題</p>
+      ${again}</div>`;
+    return;
+  }
+  document.getElementById("rIdx").textContent = rPos+1;
+  const d = DATA[rOrder[rPos]];
+  let ans = `<span class="eq">=</span>` + fracHTML(d.num.en, d.den.en);
+  let zh = `${d.num.zh} ÷ ${d.den.zh}`;
+  if(d.alt){
+    ans += `<span class="eq">=</span>` + fracHTML(d.alt.numEn, d.alt.denEn);
+    zh += `　＝　${d.alt.numZh} ÷ ${d.alt.denZh}`;
+  }
+  panel.innerHTML = `<div class="qcat">${d.cat}</div>
+    <div class="qname">${d.en}</div>
+    <div class="qname-zh">${d.zh}</div>
+    <p style="font-size:13px;color:#888;">👉 用<b>英文</b>默寫公式（紙上或下方），再按按鈕對答案</p>
+    <textarea placeholder="Write the formula in English…"></textarea>
+    <button class="btn" onclick="revealRecall()">顯示答案 👀</button>
+    <div class="answer" id="rAns">
+      <div class="label">正解（English）</div>
+      <div class="qformula" style="margin:6px 0;">${ans}</div>
+      <div class="zhgloss" style="text-align:center;">📖 ${zh}</div>
+    </div>
+    <div id="rGrade" style="display:none;margin-top:14px;">
+      <p style="font-size:13px;margin-bottom:8px;">我寫的對嗎？</p>
+      <div class="row">
+        <button class="btn green" onclick="gradeRecall(true)">✅ 我答對</button>
+        <button class="btn red" onclick="gradeRecall(false)">❌ 我答錯</button>
+      </div></div>`;
+}
+function revealRecall(){
+  document.getElementById("rAns").classList.add("show");
+  document.getElementById("rGrade").style.display = "block";
+}
+function gradeRecall(ok){
+  const d = DATA[rOrder[rPos]];
+  if(ok){
+    rRight++; document.getElementById("rRight").textContent=rRight;
+    removeWrong(d.en);          // 答對 → 從錯題本移除（若在裡面）
+  } else {
+    rWrong++; document.getElementById("rWrong").textContent=rWrong;
+    addWrong(d.en);             // 答錯 → 加入錯題本
+  }
+  rPos++; showRecall();
+}
+
+/* ---------- 錯題本頁面 ---------- */
+function buildWrong(){
+  const w = getWrong();
+  const panel = document.getElementById("wrongPanel");
+  if(!w.length){
+    panel.innerHTML = `<div class="done"><div class="big">✨</div>
+      <h2>目前沒有錯題</h2>
+      <p style="color:#888;margin-top:8px;">在「挖空填填」或「默寫自測」答錯的題目，會自動收進這裡。</p></div>`;
+    return;
+  }
+  let html = `<div class="scorebar">
+      <span>錯題共 <b>${w.length}</b> 題</span>
+      <button class="btn red" onclick="reviewWrong()" style="margin:0;padding:7px 14px;">只複習錯題 🔁</button>
+    </div>`;
+  w.forEach(id => {
+    const d = DATA[idxOf(id)];
+    if(!d) return;
+    let f = fracHTML(d.num.en, d.den.en);
+    let zh = `${d.num.zh} ÷ ${d.den.zh}`;
+    if(d.alt){ f += `<span class="eq">=</span>`+fracHTML(d.alt.numEn,d.alt.denEn); zh += `　＝　${d.alt.numZh} ÷ ${d.alt.denZh}`; }
+    html += `<div class="frow">
+      <div class="head"><b>${d.en}</b><span>${d.zh}</span></div>
+      <div class="qformula" style="margin:6px 0;"><span class="eq">=</span>${f}</div>
+      <div class="zhgloss">📖 ${zh}</div>
+      <button class="btn green" style="padding:7px 14px;margin-top:10px;" onclick="markMastered('${d.en.replace(/'/g,"\\'")}')">✓ 已熟，移除</button>
+    </div>`;
+  });
+  html += `<div style="text-align:center;margin-top:6px;">
+    <button class="btn ghost" onclick="clearWrong()">清空錯題本</button></div>`;
+  panel.innerHTML = html;
+}
+function markMastered(id){ removeWrong(id); buildWrong(); }
+function clearWrong(){ if(confirm("確定清空所有錯題？")){ saveWrong([]); buildWrong(); } }
+
+updateBadge();
+newFill();
+startRecall();
+</script>
+</body>
+</html>
