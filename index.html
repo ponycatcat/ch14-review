@@ -60,6 +60,10 @@
   .frac .bot { display: block; padding: 2px 8px 0; }
   .eq { padding: 0 5px; font-size: 15px; vertical-align: middle; }
   .zhgloss { color: var(--red); font-size: 12px; margin-top: 8px; }
+  .exp {
+    background: #fffbe9; border-left: 3px solid #e0b400; border-radius: 4px;
+    padding: 7px 10px; font-size: 12px; color: #5a4a00; margin-top: 8px;
+  }
   .dupont {
     background: #f3eef8; border: 1.5px solid var(--purple); border-radius: 8px;
     padding: 14px; margin-top: 8px; text-align: center;
@@ -166,40 +170,57 @@
 // 每個 term = {en, zh}；答案以英文為準
 const DATA = [
   {cat:"流動性與效率", en:"Current Ratio", zh:"流動比率",
-    num:{en:"Current assets", zh:"流動資產"}, den:{en:"Current liabilities", zh:"流動負債"}},
+    num:{en:"Current assets", zh:"流動資產"}, den:{en:"Current liabilities", zh:"流動負債"},
+    exp:"短期能變現的資產夠不夠還短期的債。比值 >1 代表流動資產比流動負債多，短期償債沒問題。"},
   {cat:"流動性與效率", en:"Acid-test (Quick) Ratio", zh:"速動比率",
-    num:{en:"Current assets − Inventories − Prepayments", zh:"流動資產 − 存貨 − 預付款項"}, den:{en:"Current liabilities", zh:"流動負債"}},
+    num:{en:"Current assets − Inventories − Prepayments", zh:"流動資產 − 存貨 − 預付款項"}, den:{en:"Current liabilities", zh:"流動負債"},
+    exp:"比流動比率更嚴格：存貨、預付款項不容易馬上變現，先扣掉，只看「立即」能還債的能力。記法＝把不好變現的扣掉。"},
   {cat:"流動性與效率", en:"Accounts Receivable Turnover", zh:"應收帳款週轉率",
-    num:{en:"Net sales", zh:"銷貨淨額"}, den:{en:"Average accounts receivable", zh:"平均應收帳款"}},
+    num:{en:"Net sales", zh:"銷貨淨額"}, den:{en:"Average accounts receivable", zh:"平均應收帳款"},
+    exp:"一年把應收帳款「收回再賒出」幾次。越高＝收款越快、賒帳收得回來。賒銷產生應收，所以分子用銷貨。"},
   {cat:"流動性與效率", en:"Average Collection Period", zh:"平均收現天數",
-    num:{en:"365", zh:"365"}, den:{en:"Accounts receivable turnover", zh:"應收帳款週轉率"}},
+    num:{en:"365", zh:"365"}, den:{en:"Accounts receivable turnover", zh:"應收帳款週轉率"},
+    exp:"平均幾天收到一筆帳款。一年365天 ÷ 週轉幾次 = 每次幾天。週轉率越高→天數越短越好。"},
   {cat:"流動性與效率", en:"Inventory Turnover", zh:"存貨週轉率",
-    num:{en:"Cost of goods sold", zh:"銷貨成本"}, den:{en:"Average inventory", zh:"平均存貨"}},
+    num:{en:"Cost of goods sold", zh:"銷貨成本"}, den:{en:"Average inventory", zh:"平均存貨"},
+    exp:"一年賣掉(換新)幾次存貨。越高＝賣得快、不囤貨。存貨記成本，所以分子用「銷貨成本」而非銷貨，分子分母才一致。"},
   {cat:"流動性與效率", en:"Days' Sales in Inventory", zh:"存貨銷售天數",
-    num:{en:"365", zh:"365"}, den:{en:"Inventory turnover", zh:"存貨週轉率"}},
+    num:{en:"365", zh:"365"}, den:{en:"Inventory turnover", zh:"存貨週轉率"},
+    exp:"平均幾天賣掉一批存貨。和收現天數同理：365 ÷ 週轉次數。天數越短代表貨流得越快。"},
   {cat:"流動性與效率", en:"Fixed Asset (PP&E) Turnover", zh:"固定資產週轉率",
-    num:{en:"Net sales", zh:"銷貨淨額"}, den:{en:"Average fixed assets (PP&E)", zh:"平均固定資產"}},
+    num:{en:"Net sales", zh:"銷貨淨額"}, den:{en:"Average fixed assets (PP&E)", zh:"平均固定資產"},
+    exp:"每一元廠房設備能創造多少銷貨，看設備的使用效率。越高代表固定資產用得越有效率。"},
   {cat:"償債能力", en:"Debt Ratio", zh:"負債比率",
-    num:{en:"Total liabilities", zh:"負債總額"}, den:{en:"Total assets", zh:"資產總額"}},
+    num:{en:"Total liabilities", zh:"負債總額"}, den:{en:"Total assets", zh:"資產總額"},
+    exp:"公司的資產裡有多少是「借來的」。比值越高，財務風險越大。"},
   {cat:"償債能力", en:"Debt-to-equity Ratio", zh:"負債權益比",
-    num:{en:"Total liabilities", zh:"負債總額"}, den:{en:"Total equity", zh:"權益總額"}},
+    num:{en:"Total liabilities", zh:"負債總額"}, den:{en:"Total equity", zh:"權益總額"},
+    exp:"借的錢 vs 股東出的錢的比例。=1 代表一半借、一半自有，用來看財務槓桿大小。"},
   {cat:"償債能力", en:"Assets-to-equity Ratio", zh:"資產權益比",
-    num:{en:"Total assets", zh:"資產總額"}, den:{en:"Total equity", zh:"權益總額"}},
+    num:{en:"Total assets", zh:"資產總額"}, den:{en:"Total equity", zh:"權益總額"},
+    exp:"每一元股東權益撐起多少資產。越高＝用越多負債去擴張(槓桿越大)。和上面兩個其實在講同一件事的不同角度。"},
   {cat:"償債能力", en:"Times Interest Earned Ratio", zh:"利息保障倍數",
-    num:{en:"Income before interests and taxes (operating profit)", zh:"稅前息前淨利（營業利益）"}, den:{en:"Annual interest expenses", zh:"年度利息費用"}},
+    num:{en:"Income before interests and taxes (operating profit)", zh:"稅前息前淨利（營業利益）"}, den:{en:"Annual interest expenses", zh:"年度利息費用"},
+    exp:"賺的錢是利息費用的幾倍，看付不付得出利息。分子要「加回利息和稅」——那才是還沒拿去付息前、可用來付息的錢。倍數越高越安全。"},
   {cat:"獲利能力", en:"Profit Margin (Return on Sales)", zh:"純益率（銷售報酬率）",
-    num:{en:"Net income", zh:"淨利"}, den:{en:"Net sales", zh:"銷貨淨額"}},
+    num:{en:"Net income", zh:"淨利"}, den:{en:"Net sales", zh:"銷貨淨額"},
+    exp:"每賣出一元，最後賺到幾元淨利。看賣東西的賺錢效率(獲利力)。"},
   {cat:"獲利能力", en:"Return on Assets (ROA)", zh:"資產報酬率",
-    num:{en:"Net income", zh:"淨利"}, den:{en:"Average total assets", zh:"平均資產總額"}},
+    num:{en:"Net income", zh:"淨利"}, den:{en:"Average total assets", zh:"平均資產總額"},
+    exp:"用全部資產賺錢的能力：每一元資產能生出多少淨利。是綜合性的獲利指標。"},
   {cat:"獲利能力", en:"Asset Turnover", zh:"資產週轉率",
-    num:{en:"Net sales", zh:"銷貨淨額"}, den:{en:"Average total assets", zh:"平均資產總額"}},
+    num:{en:"Net sales", zh:"銷貨淨額"}, den:{en:"Average total assets", zh:"平均資產總額"},
+    exp:"每一元資產能創造多少銷貨——看資產的「使用效率」(注意：是創造營收，不是賺淨利)。"},
   {cat:"獲利能力", en:"Return on Equity (ROE)", zh:"權益報酬率",
-    num:{en:"Net income − Preference dividends", zh:"淨利 − 特別股股利"}, den:{en:"Average total equity", zh:"平均權益總額"}},
+    num:{en:"Net income − Preference dividends", zh:"淨利 − 特別股股利"}, den:{en:"Average total equity", zh:"平均權益總額"},
+    exp:"普通股股東每投入一元，賺回多少。扣掉特別股股利，是因為那部分不屬於普通股股東。最終看股東的投資報酬。"},
   {cat:"獲利能力", en:"Earnings per Share (EPS)", zh:"每股盈餘",
-    num:{en:"Net income − Preference dividends", zh:"淨利 − 特別股股利"}, den:{en:"Weighted-average common shares outstanding", zh:"加權平均流通在外普通股數"}},
+    num:{en:"Net income − Preference dividends", zh:"淨利 − 特別股股利"}, den:{en:"Weighted-average common shares outstanding", zh:"加權平均流通在外普通股數"},
+    exp:"每一股普通股賺多少錢。一樣扣特別股股利；分母用「加權平均」是因為流通股數年中可能變動。"},
   {cat:"獲利能力", en:"Price-Earnings (PE) Ratio", zh:"本益比",
     num:{en:"Market value of shares", zh:"股票市值"}, den:{en:"Net income", zh:"淨利"},
-    alt:{numEn:"Price per share", numZh:"每股市價", denEn:"Earnings per share", denZh:"每股盈餘"}},
+    alt:{numEn:"Price per share", numZh:"每股市價", denEn:"Earnings per share", denZh:"每股盈餘"},
+    exp:"股價是每股盈餘的幾倍——市場願意為「賺1元」付多少錢。越高代表市場對未來成長越樂觀。"},
 ];
 
 // 用英文比率名當唯一 id；index 查詢
@@ -253,6 +274,7 @@ function fracHTML(top, bot){
         <div class="head"><b>${d.en}</b><span>${d.zh}</span></div>
         <div class="qformula" style="margin:6px 0;"><span class="eq">=</span>${f}</div>
         <div class="zhgloss">📖 ${zh}</div>
+        ${d.exp ? `<div class="exp">💡 ${d.exp}</div>` : ""}
       </div>`;
     });
   });
@@ -262,6 +284,7 @@ function fracHTML(top, bot){
       <span class="eq">×</span>${fracHTML("Net sales","Avg. total assets")}
       <span class="eq">×</span>${fracHTML("Avg. total assets","Avg. total equity")}
       <div class="zhgloss" style="margin-top:10px;">📖 權益報酬率 ＝ 純益率 × 資產週轉率 × 資產權益比</div>
+      <div class="exp" style="text-align:left;">💡 把 ROE 拆成三塊找出高低原因：<b>會不會賺</b>(獲利力) × <b>會不會用資產</b>(效率) × <b>敢不敢借錢</b>(槓桿)。中間 Net sales、Avg. total assets 一約分就還原回 ROE。</div>
     </div>`;
   html += `<div class="hint"><b>📌 老師 Hint：</b>默寫考<b>全英文</b>。「公式背好，題目就會寫了」，考試會給數字直接代入。
     凡是 <b>Average</b>（平均）項目＝ <b>(beginning + ending) ÷ 2</b>（期初＋期末）÷2。
@@ -377,6 +400,7 @@ function showRecall(){
       <div class="label">正解（English）</div>
       <div class="qformula" style="margin:6px 0;">${ans}</div>
       <div class="zhgloss" style="text-align:center;">📖 ${zh}</div>
+      ${d.exp ? `<div class="exp">💡 ${d.exp}</div>` : ""}
     </div>
     <div id="rGrade" style="display:none;margin-top:14px;">
       <p style="font-size:13px;margin-bottom:8px;">我寫的對嗎？</p>
@@ -425,6 +449,7 @@ function buildWrong(){
       <div class="head"><b>${d.en}</b><span>${d.zh}</span></div>
       <div class="qformula" style="margin:6px 0;"><span class="eq">=</span>${f}</div>
       <div class="zhgloss">📖 ${zh}</div>
+      ${d.exp ? `<div class="exp">💡 ${d.exp}</div>` : ""}
       <button class="btn green" style="padding:7px 14px;margin-top:10px;" onclick="markMastered('${d.en.replace(/'/g,"\\'")}')">✓ 已熟，移除</button>
     </div>`;
   });
