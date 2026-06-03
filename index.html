@@ -128,6 +128,35 @@
   .hint b { color: var(--navy); }
   .done { text-align: center; padding: 30px 10px; }
   .done .big { font-size: 40px; }
+
+  /* ---- exam review ---- */
+  .examhead {
+    background: var(--navy); color: #fff; border-radius: 10px;
+    padding: 14px 16px; margin-bottom: 14px;
+  }
+  .examhead h2 { font-size: 16px; }
+  .examhead p { font-size: 12px; opacity: .9; margin-top: 4px; }
+  .scoreboard { display: flex; gap: 10px; margin-bottom: 14px; }
+  .scorecard {
+    flex: 1; background: var(--card); border: 1px solid var(--line);
+    border-radius: 10px; padding: 12px; text-align: center;
+  }
+  .scorecard .lbl { font-size: 12px; color: #888; }
+  .scorecard .val { font-size: 22px; font-weight: bold; color: var(--navy); }
+  .gtable { width: 100%; border-collapse: collapse; background: var(--card);
+    border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin-bottom: 6px; }
+  .gtable td { padding: 8px 10px; border-bottom: 1px solid var(--line); font-size: 12.5px; vertical-align: top; }
+  .gtable .gn { width: 24px; color: #888; font-weight: bold; }
+  .gtable .gmark { width: 26px; text-align: center; font-size: 15px; }
+  .gtable tr.ok { background: #f3faf5; }
+  .gtable tr.no { background: #fdf3f1; }
+  .gtable .gfix { color: var(--red); font-size: 11.5px; margin-top: 3px; }
+  .gtable .gyours { color: #777; font-size: 11.5px; }
+  .lesson {
+    background: #fffbe9; border: 1.5px solid #e0b400; border-radius: 8px;
+    padding: 12px 14px; font-size: 13px; margin: 14px 0;
+  }
+  .lesson b { color: #8a6d00; }
 </style>
 </head>
 <body>
@@ -140,6 +169,7 @@
   <button class="tab" data-v="fill">✍️ 挖空填填</button>
   <button class="tab" data-v="recall">🧠 默寫自測</button>
   <button class="tab" data-v="wrong">📌 錯題本<span id="wrongBadge" class="badge"></span></button>
+  <button class="tab" data-v="exam">📝 考卷檢討</button>
 </div>
 
 <main>
@@ -163,6 +193,10 @@
 
   <section id="wrong" class="view">
     <div id="wrongPanel"></div>
+  </section>
+
+  <section id="exam" class="view">
+    <div id="examPanel"></div>
   </section>
 </main>
 
@@ -249,6 +283,7 @@ document.querySelectorAll(".tab").forEach(t => {
     t.classList.add("active");
     document.getElementById(t.dataset.v).classList.add("active");
     if(t.dataset.v === "wrong") buildWrong();
+    if(t.dataset.v === "exam") buildExam();
   };
 });
 
@@ -460,7 +495,96 @@ function buildWrong(){
 function markMastered(id){ removeWrong(id); buildWrong(); }
 function clearWrong(){ if(confirm("確定清空所有錯題？")){ saveWrong([]); buildWrong(); } }
 
+/* ---------- 考卷檢討 ---------- */
+// id 對應 DATA 的 en，方便「複習錯題」抓回去
+const EXAM = {
+  title: "2026/6/2 資管一B 會計學小考",
+  subtitle: "CH14 公式默寫（題上作答）",
+  part1: [
+    {n:1, name:"Debt ratio", ok:true},
+    {n:2, name:"Inventory turnover", ok:false, id:"Inventory Turnover", yours:"Net sale / Average inventory", fix:"分子應是 Cost of goods sold（存貨配成本！）"},
+    {n:3, name:"Asset turnover", ok:true},
+    {n:4, name:"Current ratio", ok:true},
+    {n:5, name:"Accounts receivable turnover", ok:true},
+    {n:6, name:"Return on assets", ok:true},
+    {n:7, name:"Earnings per share", ok:false, id:"Earnings per Share (EPS)", yours:"（空白）", fix:"(Net income − Preference dividends) / Weighted-average common shares outstanding"},
+    {n:8, name:"Acid-test (quick) ratio", ok:false, id:"Acid-test (Quick) Ratio", yours:"Current income − Inventory − Prepayment / Current liabilities", fix:"是 Current ASSETS，不是 income"},
+    {n:9, name:"Profit margin (Return on sales)", ok:true},
+    {n:10, name:"Average collection period", ok:true, note:"嚴格說分母要寫 Accounts receivable turnover"},
+    {n:11, name:"Times interest earned ratio", ok:false, id:"Times Interest Earned Ratio", yours:"− preference / annual common share interest", fix:"Income before interests and taxes (operating profit) / Annual interest expenses"},
+    {n:12, name:"Debt-to-equity ratio", ok:true},
+    {n:13, name:"Return on equity", ok:false, id:"Return on Equity (ROE)", yours:"Net sales / Average total equity", fix:"分子應是 Net income − Preference dividends"},
+    {n:14, name:"Number of days' sales in inventory", ok:true},
+    {n:15, name:"Fixed asset turnover", ok:true},
+    {n:16, name:"Price-earnings ratio (PE)", ok:false, id:"Price-Earnings (PE) Ratio", yours:"（空白）", fix:"Market value of shares / Net income = Price per share / Earnings per share"},
+    {n:17, name:"DuPont Framework", ok:false, yours:"（空白）", fix:"Profit margin × Asset turnover × Assets-to-equity"},
+  ],
+  part2: [
+    {n:1, name:"Accounts receivable turnover", ok:true, ex:"259,488 / 23,942 ≈ 10.84", ch:"129,925 / 14,798 ≈ 8.78"},
+    {n:2, name:"Average collection period", ok:true, ex:"365 / 10.84 ≈ 33.7 天", ch:"365 / 8.78 ≈ 41.6 天"},
+    {n:3, name:"Inventory turnover", ok:false, fix:"用 COGS 不是 Sales", ex:"130,003 / 16,462 ≈ 7.90", ch:"69,751 / 6,420 ≈ 10.86"},
+    {n:4, name:"Number of days' sales in inventory", ok:false, fix:"跟著存貨週轉率一起錯", ex:"365 / 7.90 ≈ 46.2 天", ch:"365 / 10.86 ≈ 33.6 天"},
+    {n:5, name:"Fixed asset turnover", ok:false, fix:"用 Net sales 不是 COGS", ex:"259,488 / 252,137 ≈ 1.03", ch:"129,925 / 185,785 ≈ 0.70"},
+  ],
+};
+
+function buildExam(){
+  const p1right = EXAM.part1.filter(q => q.ok).length;
+  const p2right = EXAM.part2.filter(q => q.ok).length * 2; // 每題兩家
+  const wrongIds = EXAM.part1.filter(q => !q.ok && q.id).map(q => q.id);
+
+  let html = `<div class="examhead"><h2>📝 ${EXAM.title}</h2><p>${EXAM.subtitle}</p></div>
+    <div class="scoreboard">
+      <div class="scorecard"><div class="lbl">公式默寫</div><div class="val">${p1right}/17</div></div>
+      <div class="scorecard"><div class="lbl">綜合練習</div><div class="val">${p2right}/10</div></div>
+    </div>`;
+
+  // 關鍵觀念
+  html += `<div class="lesson">🔑 <b>最關鍵的觀念（你連錯好幾題）：</b><br>
+    <b>存貨週轉率</b>分子用 <b>Cost of goods sold（銷貨成本）</b>；
+    其他週轉率（應收、固定資產、總資產）分子用 <b>Net sales（銷貨）</b>。<br>
+    👉 記法：<b>「存貨配成本，其他配銷貨」</b></div>`;
+
+  // 一鍵複習錯題
+  html += `<button class="btn red" onclick="reviewExamWrong()">🎯 只複習這次考錯的（${wrongIds.length} 條公式）</button>`;
+
+  // Part 1 表
+  html += `<div class="cat" style="margin-top:18px;">① 公式默寫 Part 1</div><table class="gtable">`;
+  EXAM.part1.forEach(q => {
+    html += `<tr class="${q.ok?'ok':'no'}"><td class="gn">${q.n}</td>
+      <td class="gmark">${q.ok?'✅':'❌'}</td>
+      <td><b>${q.name}</b>
+        ${q.yours?`<div class="gyours">你寫：${q.yours}</div>`:''}
+        ${q.fix?`<div class="gfix">✔ 正解：${q.fix}</div>`:''}
+        ${q.note?`<div class="gyours">※ ${q.note}</div>`:''}
+      </td></tr>`;
+  });
+  html += `</table>`;
+
+  // Part 2 表
+  html += `<div class="cat" style="margin-top:18px;">② 綜合練習 Part 2 <span class="en">ExxonMobil / Chevron</span></div><table class="gtable">`;
+  EXAM.part2.forEach(q => {
+    html += `<tr class="${q.ok?'ok':'no'}"><td class="gn">${q.n}</td>
+      <td class="gmark">${q.ok?'✅':'❌'}</td>
+      <td><b>${q.name}</b>
+        ${q.fix?`<div class="gfix">✔ ${q.fix}</div>`:''}
+        <div class="gyours">Exxon：${q.ex}　｜　Chevron：${q.ch}</div>
+      </td></tr>`;
+  });
+  html += `</table>`;
+
+  document.getElementById("examPanel").innerHTML = html;
+}
+
+// 把考卷錯的灌進錯題本，並開始默寫複習
+function reviewExamWrong(){
+  const ids = EXAM.part1.filter(q => !q.ok && q.id).map(q => q.id);
+  ids.forEach(addWrong);
+  reviewWrong();
+}
+
 updateBadge();
+buildExam();
 newFill();
 startRecall();
 </script>
