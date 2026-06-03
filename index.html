@@ -230,9 +230,6 @@ const DATA = [
   {cat:"償債能力", en:"Debt-to-equity Ratio", zh:"負債權益比",
     num:{en:"Total liabilities", zh:"負債總額"}, den:{en:"Total equity", zh:"權益總額"},
     exp:"借的錢 vs 股東出的錢的比例。=1 代表一半借、一半自有，用來看財務槓桿大小。"},
-  {cat:"償債能力", en:"Assets-to-equity Ratio", zh:"資產權益比",
-    num:{en:"Total assets", zh:"資產總額"}, den:{en:"Total equity", zh:"權益總額"},
-    exp:"每一元股東權益撐起多少資產。越高＝用越多負債去擴張(槓桿越大)。和上面兩個其實在講同一件事的不同角度。"},
   {cat:"償債能力", en:"Times Interest Earned Ratio", zh:"利息保障倍數",
     num:{en:"Income before interests and taxes (operating profit)", zh:"稅前息前淨利（營業利益）"}, den:{en:"Annual interest expenses", zh:"年度利息費用"},
     exp:"賺的錢是利息費用的幾倍，看付不付得出利息。分子要「加回利息和稅」——那才是還沒拿去付息前、可用來付息的錢。倍數越高越安全。"},
@@ -255,6 +252,11 @@ const DATA = [
     num:{en:"Market value of shares", zh:"股票市值"}, den:{en:"Net income", zh:"淨利"},
     alt:{numEn:"Price per share", numZh:"每股市價", denEn:"Earnings per share", denZh:"每股盈餘"},
     exp:"股價是每股盈餘的幾倍——市場願意為「賺1元」付多少錢。越高代表市場對未來成長越樂觀。"},
+  {cat:"DuPont", en:"DuPont Framework", zh:"杜邦分析（ROE 拆解）", type:"product",
+    word:"Profit margin × Asset turnover × Assets-to-equity",
+    factors:[{num:"Net income",den:"Net sales"},{num:"Net sales",den:"Average total assets"},{num:"Average total assets",den:"Average total equity"}],
+    zhgloss:"純益率 × 資產週轉率 × 資產權益比（中間 Net sales、Avg. total assets 約分後還原回 ROE）",
+    exp:"把 ROE 拆成三塊找出高低原因：會不會賺(獲利力) × 會不會用資產(效率) × 敢不敢借錢(槓桿)。"},
 ];
 
 // 用英文比率名當唯一 id；index 查詢
@@ -290,38 +292,45 @@ document.querySelectorAll(".tab").forEach(t => {
 function fracHTML(top, bot){
   return `<span class="frac"><span class="top">${top}</span><span class="bot">${bot}</span></span>`;
 }
+// 統一產生公式（分數 / 分數+替代式 / 相乘型 DuPont）
+function formulaHTML(d){
+  if(d.type==="product") return d.factors.map(f => fracHTML(f.num, f.den)).join('<span class="eq">×</span>');
+  let f = fracHTML(d.num.en, d.den.en);
+  if(d.alt) f += `<span class="eq">=</span>` + fracHTML(d.alt.numEn, d.alt.denEn);
+  return f;
+}
+function glossZh(d){
+  if(d.type==="product") return d.zhgloss;
+  let zh = `${d.num.zh} ÷ ${d.den.zh}`;
+  if(d.alt) zh += `　＝　${d.alt.numZh} ÷ ${d.alt.denZh}`;
+  return zh;
+}
 
 /* ---------- 公式表 ---------- */
 (function buildRef(){
   const cats = ["流動性與效率","償債能力","獲利能力"];
-  const en = {"流動性與效率":"Liquidity & Efficiency","償債能力":"Solvency","獲利能力":"Profitability"};
+  const enMap = {"流動性與效率":"Liquidity & Efficiency","償債能力":"Solvency","獲利能力":"Profitability"};
   let html = "";
   cats.forEach(c => {
-    html += `<div class="cat">${c} <span class="en">${en[c]}</span></div>`;
+    html += `<div class="cat">${c} <span class="en">${enMap[c]}</span></div>`;
     DATA.filter(d => d.cat===c).forEach(d => {
-      let f = fracHTML(d.num.en, d.den.en);
-      let zh = `${d.num.zh} ÷ ${d.den.zh}`;
-      if(d.alt){
-        f += `<span class="eq">=</span>` + fracHTML(d.alt.numEn, d.alt.denEn);
-        zh += `　＝　${d.alt.numZh} ÷ ${d.alt.denZh}`;
-      }
       html += `<div class="frow">
         <div class="head"><b>${d.en}</b><span>${d.zh}</span></div>
-        <div class="qformula" style="margin:6px 0;"><span class="eq">=</span>${f}</div>
-        <div class="zhgloss">📖 ${zh}</div>
+        <div class="qformula" style="margin:6px 0;"><span class="eq">=</span>${formulaHTML(d)}</div>
+        <div class="zhgloss">📖 ${glossZh(d)}</div>
         ${d.exp ? `<div class="exp">💡 ${d.exp}</div>` : ""}
       </div>`;
     });
   });
-  html += `<div class="cat purple">★ DuPont 杜邦分析 <span class="en">DuPont Framework</span></div>
-    <div class="dupont"><b>ROE = Profit margin × Asset turnover × Assets-to-equity</b><br><br>
-      <span class="eq">=</span>${fracHTML("Net income","Net sales")}
-      <span class="eq">×</span>${fracHTML("Net sales","Avg. total assets")}
-      <span class="eq">×</span>${fracHTML("Avg. total assets","Avg. total equity")}
-      <div class="zhgloss" style="margin-top:10px;">📖 權益報酬率 ＝ 純益率 × 資產週轉率 × 資產權益比</div>
-      <div class="exp" style="text-align:left;">💡 把 ROE 拆成三塊找出高低原因：<b>會不會賺</b>(獲利力) × <b>會不會用資產</b>(效率) × <b>敢不敢借錢</b>(槓桿)。中間 Net sales、Avg. total assets 一約分就還原回 ROE。</div>
-    </div>`;
-  html += `<div class="hint"><b>📌 老師 Hint：</b>默寫考<b>全英文</b>。「公式背好，題目就會寫了」，考試會給數字直接代入。
+  DATA.filter(d => d.type==="product").forEach(d => {
+    html += `<div class="cat purple">★ ${d.en} <span class="en">${d.zh}</span></div>
+      <div class="dupont"><b>ROE = ${d.word}</b><br><br>
+        <span class="eq">=</span>${formulaHTML(d)}
+        <div class="zhgloss" style="margin-top:10px;">📖 ${glossZh(d)}</div>
+        ${d.exp ? `<div class="exp" style="text-align:left;">💡 ${d.exp}</div>` : ""}
+      </div>`;
+  });
+  html += `<div class="hint"><b>📌 老師 Hint：</b>默寫考<b>全英文</b>，共 <b>17 條</b>（含 DuPont）。「公式背好，題目就會寫了」，考試會給數字直接代入。
     凡是 <b>Average</b>（平均）項目＝ <b>(beginning + ending) ÷ 2</b>（期初＋期末）÷2。
     Cash flow 比率 (p.673–675) 不考。</div>`;
   document.getElementById("ref").innerHTML = html;
@@ -329,15 +338,16 @@ function fracHTML(top, bot){
 
 /* ---------- 挖空填填（英文）---------- */
 let fScore=0, fTotal=0, fLastIdx=-1;
-// 收集所有英文 term（含中文對照）作為選項池
+// 挖空只用分數型公式（DuPont 相乘型不挖空）
+const FILL = DATA.filter(d => !d.type);
 const termMap = {};
-DATA.forEach(d => { termMap[d.num.en]=d.num.zh; termMap[d.den.en]=d.den.zh; });
+FILL.forEach(d => { termMap[d.num.en]=d.num.zh; termMap[d.den.en]=d.den.zh; });
 const allTermEn = Object.keys(termMap);
 
 function newFill(){
-  let i; do { i = Math.floor(Math.random()*DATA.length); } while(i===fLastIdx && DATA.length>1);
+  let i; do { i = Math.floor(Math.random()*FILL.length); } while(i===fLastIdx && FILL.length>1);
   fLastIdx = i;
-  const d = DATA[i];
+  const d = FILL[i];
   const blankNum = Math.random() < 0.5;
   const answer = blankNum ? d.num.en : d.den.en;
   const pool = allTermEn.filter(t => t!==answer);
@@ -419,12 +429,8 @@ function showRecall(){
   }
   document.getElementById("rIdx").textContent = rPos+1;
   const d = DATA[rOrder[rPos]];
-  let ans = `<span class="eq">=</span>` + fracHTML(d.num.en, d.den.en);
-  let zh = `${d.num.zh} ÷ ${d.den.zh}`;
-  if(d.alt){
-    ans += `<span class="eq">=</span>` + fracHTML(d.alt.numEn, d.alt.denEn);
-    zh += `　＝　${d.alt.numZh} ÷ ${d.alt.denZh}`;
-  }
+  let ans = `<span class="eq">=</span>` + formulaHTML(d);
+  let zh = glossZh(d);
   panel.innerHTML = `<div class="qcat">${d.cat}</div>
     <div class="qname">${d.en}</div>
     <div class="qname-zh">${d.zh}</div>
@@ -477,9 +483,8 @@ function buildWrong(){
   w.forEach(id => {
     const d = DATA[idxOf(id)];
     if(!d) return;
-    let f = fracHTML(d.num.en, d.den.en);
-    let zh = `${d.num.zh} ÷ ${d.den.zh}`;
-    if(d.alt){ f += `<span class="eq">=</span>`+fracHTML(d.alt.numEn,d.alt.denEn); zh += `　＝　${d.alt.numZh} ÷ ${d.alt.denZh}`; }
+    let f = formulaHTML(d);
+    let zh = glossZh(d);
     html += `<div class="frow">
       <div class="head"><b>${d.en}</b><span>${d.zh}</span></div>
       <div class="qformula" style="margin:6px 0;"><span class="eq">=</span>${f}</div>
@@ -517,7 +522,7 @@ const EXAM = {
     {n:14, name:"Number of days' sales in inventory", ok:true},
     {n:15, name:"Fixed asset turnover", ok:true},
     {n:16, name:"Price-earnings ratio (PE)", ok:false, id:"Price-Earnings (PE) Ratio", yours:"（空白）", fix:"Market value of shares / Net income = Price per share / Earnings per share"},
-    {n:17, name:"DuPont Framework", ok:false, yours:"（空白）", fix:"Profit margin × Asset turnover × Assets-to-equity"},
+    {n:17, name:"DuPont Framework", ok:false, id:"DuPont Framework", yours:"（空白）", fix:"Profit margin × Asset turnover × Assets-to-equity"},
   ],
   part2: [
     {n:1, name:"Accounts receivable turnover", ok:true, ex:"259,488 / 23,942 ≈ 10.84", ch:"129,925 / 14,798 ≈ 8.78"},
